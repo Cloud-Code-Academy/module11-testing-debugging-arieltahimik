@@ -16,7 +16,7 @@ public with sharing class LeadTriggerHandlerTest {
             new Lead(LastName = 'Test Lead A', Company = 'Test Company A', Title = 'assist'),
             new Lead(LastName = 'Test Lead B', Company = 'Test Company B', Title = 'deputy'),
             new Lead(LastName = 'Test Lead C', Company = 'Test Company C', Title = 'jr'),
-            new Lead(LastName = 'Test Lead C', Company = 'Test Company C')
+            new Lead(LastName = 'Test Lead D', Company = 'Test Company D')
         };
 
         insert leads;
@@ -43,4 +43,69 @@ public with sharing class LeadTriggerHandlerTest {
             System.debug('Lead: ' + lead);
         }        
     }  
+
+    @isTest
+    private static void testLeadTriggerHandler_handleTitleNormalization_update() {
+        
+        List<Lead> leads = new List<Lead>{
+            new Lead(LastName = 'Test Lead 1', Company = 'Test Company 1'),
+            new Lead(LastName = 'Test Lead 2', Company = 'Test Company 2'),
+            new Lead(LastName = 'Test Lead 3', Company = 'Test Company 3'),
+            new Lead(LastName = 'Test Lead 4', Company = 'Test Company 4'),
+            new Lead(LastName = 'Test Lead 5', Company = 'Test Company 5'),
+            new Lead(LastName = 'Test Lead 6', Company = 'Test Company 6'),
+            new Lead(LastName = 'Test Lead 7', Company = 'Test Company 7'),
+            new Lead(LastName = 'Test Lead 8', Company = 'Test Company 8'),
+            new Lead(LastName = 'Test Lead 9', Company = 'Test Company 9'),
+            new Lead(LastName = 'Test Lead A', Company = 'Test Company A'),
+            new Lead(LastName = 'Test Lead B', Company = 'Test Company B'),
+            new Lead(LastName = 'Test Lead C', Company = 'Test Company C'),
+            new Lead(LastName = 'Test Lead D', Company = 'Test Company D')
+        };
+
+        insert leads;
+
+        List<Lead> leadsToUpdate = [SELECT Id, Title FROM Lead WHERE Id IN :leads];
+
+        for (Integer i=0; i<leadsToUpdate.size(); i++) {
+            if (i < 3) {
+                leadsToUpdate[i].Title = 'vp';
+            } else if (i < 6) {
+                leadsToUpdate[i].Title = 'mgr';
+            } else if (i < 9) {
+                leadsToUpdate[i].Title = 'exec';
+            } else if (i < 12) {
+                leadsToUpdate[i].Title = 'assist';
+            } else {
+                leadsToUpdate[i].Title = null;
+            }
+        }
+
+        update leadsToUpdate;
+        
+        Test.startTest();
+        LeadTriggerHandler.handleTitleNormalization(leads);
+        Test.stopTest();
+
+        List<Lead> vpLeads = [SELECT Id, Title FROM Lead WHERE Id IN :leadsToUpdate AND Title = 'Vice President'];
+        System.assertEquals(3, vpLeads.size(), 'Expected 3 leads to be updated to Vice President');
+
+        List<Lead> mgrLeads = [SELECT Id, Title FROM Lead WHERE Id IN :leadsToUpdate AND Title = 'Manager'];
+        System.assertEquals(3, mgrLeads.size(), 'Expected 3 leads to be updated to Manager');
+
+        List<Lead> execLeads = [SELECT Id, Title FROM Lead WHERE Id IN :leadsToUpdate AND Title = 'Executive'];
+        System.assertEquals(3, execLeads.size(), 'Expected 3 leads to be updated to Executive');
+
+        List<Lead> astLeads = [SELECT Id, Title FROM Lead WHERE Id IN :leadsToUpdate AND Title = 'Assistant'];
+        System.assertEquals(3, astLeads.size(), 'Expected 3 leads to be updated to Assistant');
+
+        List<Lead> nulLeads = [SELECT Id, Title FROM Lead WHERE Id IN :leadsToUpdate AND Title = null];
+        System.assertEquals(1, nulLeads.size(), 'Expected 1 lead to be null');
+
+        leadsToUpdate = [SELECT Id, Title FROM Lead WHERE Id IN :leads];
+        for (Lead lead : leadsToUpdate) {
+            System.debug('Lead: ' + lead);
+        }        
+    }
+
 }
