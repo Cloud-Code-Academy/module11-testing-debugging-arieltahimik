@@ -108,4 +108,55 @@ public with sharing class LeadTriggerHandlerTest {
         }        
     }
 
+    @isTest
+    private static void testLeadTriggerHandler_handleAutoLeadScoring_insert() {
+        List<Lead> leads = new List<Lead>{
+            new Lead(LastName = 'Test Lead 0', Company = 'Test Company 0', LeadSource = 'Web', Email = 'lead0@testcompany0.com', Phone = '1234567890', Industry = 'Technology'),
+            new Lead(LastName = 'Test Lead 1', Company = 'Test Company 1', LeadSource = 'Web', Email = 'lead1@testcompany1.com'),
+            new Lead(LastName = 'Test Lead 2', Company = 'Test Company 2', Phone = '1234567890'),
+            new Lead(LastName = 'Test Lead 3', Company = 'Test Company 3', Industry = 'Technology'),
+            new Lead(LastName = 'Test Lead 4', Company = 'Test Company 4', LeadSource = 'Web', Email = 'lead4@testcompany4.com', Phone = '5678901234'),
+            new Lead(LastName = 'Test Lead 5', Company = 'Test Company 5', LeadSource = 'Web', Email = 'lead5@testcompany5.com', Industry = 'Technology'),
+            new Lead(LastName = 'Test Lead 6', Company = 'Test Company 6'),
+            new Lead(LastName = 'Test Lead 7', Company = 'Test Company 7', Title = 'vp', LeadSource = 'Web', Email = 'lead7@testcompany7.com', Phone = '8887777777', Industry = 'Technology'),
+            new Lead(LastName = 'Test Lead 8', Company = 'Test Company 8', Title = 'exec', LeadSource = 'Web', Email = 'lead8@testcompany8.com'),
+            new Lead(LastName = 'Test Lead 9', Company = 'Test Company 9', Title = 'mgr', Phone = '8888888888'),
+            new Lead(LastName = 'Test Lead A', Company = 'Test Company A', Title = 'jr', Industry = 'Technology')
+
+        };
+
+        insert leads;
+
+        Test.startTest();
+        LeadTriggerHandler.handleAutoLeadScoring(leads);
+        Test.stopTest();
+
+        System.assertEquals(18, leads[0].Lead_Score__c);
+        System.assertEquals( 3, leads[1].Lead_Score__c);
+        System.assertEquals( 5, leads[2].Lead_Score__c);
+        System.assertEquals(10, leads[3].Lead_Score__c);
+        System.assertEquals( 8, leads[4].Lead_Score__c);
+        System.assertEquals(13, leads[5].Lead_Score__c);
+        System.assertEquals( 0, leads[6].Lead_Score__c);
+        System.assertEquals(18, leads[7].Lead_Score__c);
+
+        Lead l = [SELECT Id, Title FROM Lead WHERE Id = :leads[6].Id LIMIT 1];
+        System.assertEquals(null, l.Title);
+        
+        Lead vp = [SELECT Id, Title FROM Lead WHERE Id = :leads[7].Id LIMIT 1];
+        System.assertEquals('Vice President', vp.Title);
+
+        Lead exec = [SELECT Id, Title FROM Lead WHERE Id = :leads[8].Id LIMIT 1];
+        System.assertEquals('Executive', exec.Title);
+
+        Lead mgr = [SELECT Id, Title FROM Lead WHERE Id = :leads[9].Id LIMIT 1];
+        System.assertEquals('Manager', mgr.Title);
+
+        Lead jr = [SELECT Id, Title FROM Lead WHERE Id = :leads[10].Id LIMIT 1];
+        System.assertEquals('Assistant', jr.Title);
+
+        for (Lead lead : [SELECT Id, LastName, Company, Title, Website, Email, Phone, Industry, Lead_Score__c FROM Lead WHERE Id IN :leads]) {
+            System.debug('Lead: ' + lead);
+        }
+    }
 }
