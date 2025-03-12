@@ -15,7 +15,8 @@
  * - It's essential to test the trigger thoroughly after making any changes to ensure its correct functionality.
  * - Debugging skills will be tested, so students should look out for discrepancies between the expected and actual behavior.
  */
-trigger LeadTrigger on Lead(before insert, before update) {
+trigger LeadTrigger on Lead(before insert, before update, after insert, after update) {
+	System.debug('Trigger.operationType >>> ' + Trigger.operationType);
 	switch on Trigger.operationType {
 		when BEFORE_INSERT {
 			LeadTriggerHandler.handleTitleNormalization(Trigger.new);

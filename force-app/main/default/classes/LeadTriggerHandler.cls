@@ -31,20 +31,16 @@ public with sharing class LeadTriggerHandler {
 	 *   change the title to 'Assistant'.
 	 */
 	public static void handleTitleNormalization(List<Lead> leadsToNormalize) {
+		System.debug('RUN: handleTitleNormalization');
+		System.debug('leadsToNormalize: ' + leadsToNormalize);
 		for (Lead ld : leadsToNormalize) {
 			if (ld.title == null) {
 				continue;
-			}
-
-			ld.Title = ld.Title.toLowerCase();
+			}			
 			
 			if (ld.title == 'vp' || ld.title.contains('v.p.') || ld.title.contains('vice president')) {
 				ld.Title = 'Vice President';
-			} else if (
-				ld.title.contains('mgr') ||
-				ld.title.contains('manage') ||
-				ld.title.contains('head of department')
-			) {
+			} else if (ld.title.contains('mgr') || ld.title.contains('manage') || ld.title.contains('head of department')) {
 				ld.Title = 'Manager';
 			} else if (ld.title.contains('exec') || ld.title == 'chief' || ld.title.contains('head')) {
 				ld.Title = 'Executive';
@@ -66,6 +62,8 @@ public with sharing class LeadTriggerHandler {
 	 * - If the lead belongs to the 'Technology' industry, increment score by another 10 points.
 	 */
 	public static void handleAutoLeadScoring(List<Lead> leadsToScore) {
+		System.debug('RUN: handleAutoLeadScoring');
+		System.debug('leadsToScore: ' + leadsToScore);
 		for (Lead ld : leadsToScore) {
 			Integer score = 0;
 
@@ -110,9 +108,17 @@ public with sharing class LeadTriggerHandler {
 	 * - One of the errors is map related. Make sure you are using the correct contact map key
 	 */
 	public static void handleLeadAutoConvert(List<Lead> leads) {
+		System.debug('RUN: handleLeadAutoConvert');
+		System.debug('leadsToAutoConvert >>' + leads);
 		// Step 1: Gather all lead emails
         Map<Id,String> leadToEmailMap = new Map<Id,String>();
 		for (Lead lead : leads) {
+
+			// Prevent recursion by skipping already converted leads, or leads without an email
+			if (lead.IsConverted || lead.Email == null) {
+				continue;
+			}
+
 			leadToEmailMap.put(lead.Id, lead.Email);
 		}
 
